@@ -17,15 +17,36 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image('tileset', 'assets/tileset.png');
+        this.load.tilemapTiledJSON('map', 'assets/map.json');
+
         this.load.image('player', 'assets/player.png');
     }
 
     create() {
         this.connectToRoom();
 
+        const map = this.make.tilemap({ key: 'map' });
+        const tileset = map.addTilesetImage('ground', 'tileset');
+        if (!tileset) {
+            console.error('Tileset not found');
+            return;
+        }
+
+        const foregroundLayer = map.createLayer('Tile Layer 1', tileset);
+
+        this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        foregroundLayer?.setCollisionByProperty({ collides: true });
+
         this.player = this.physics.add.sprite(400, 300, 'player');
         this.player.setCollideWorldBounds(true);
         this.cursors = this.input.keyboard?.createCursorKeys();
+
+        // camera
+        this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        this.cameras.main.setDeadzone(100, 100);
+
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
     }
 
     async connectToRoom() {
@@ -93,12 +114,19 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
 
+        this.adjustCamera();
         const velocity = this.getPlayerMovement();
         this.player.setVelocity(velocity.x, velocity.y);
 
         // Only send position to server if the player is actually moving
         if (velocity.x !== 0 || velocity.y !== 0) {
             this.room.send('move', { x: this.player.x, y: this.player.y });
+        }
+    }
+
+    private adjustCamera() {
+        if (!this.player || !this.cursors) {
+            return;
         }
     }
 
