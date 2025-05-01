@@ -47,6 +47,7 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.setDeadzone(100, 100);
 
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
+        this.cameras.main.setFollowOffset(-300, 0);
     }
 
     async connectToRoom() {
@@ -62,39 +63,42 @@ export default class GameScene extends Phaser.Scene {
                 const sprite = this.physics.add.sprite(400, 300, 'player');
                 this.otherPlayers.set(sessionId, sprite);
 
+                // When the player's position updates, use a tween to move smoothly
                 $(player).onChange(() => {
                     const otherPlayer = this.otherPlayers.get(sessionId);
                     if (otherPlayer) {
-                        otherPlayer.setPosition(player.x, player.y);
+                        this.tweens.add({
+                            targets: otherPlayer,
+                            x: player.x,
+                            y: player.y,
+                            duration: 100, // Move to the new position over 100ms
+                            ease: 'Linear', // Linear easing for consistent speed
+                        });
                     }
                 });
             });
 
             $(this.room.state).players.onRemove((player, sessionId) => {
                 const otherPlayer = this.otherPlayers.get(sessionId);
-
                 if (otherPlayer) {
                     otherPlayer.destroy();
                     this.otherPlayers.delete(sessionId);
                 }
             });
 
-            // Set up message listeners
+            // Existing message, state change, error, and leave handlers remain unchanged
             this.room.onMessage('*', (type, message) => {
                 console.log('Received message:', type, message);
             });
 
-            // Set up state change listeners
             this.room.onStateChange((state) => {
                 console.log('State changed:', state.players);
             });
 
-            // Handle room errors
             this.room.onError((code, message) => {
                 console.error('Room error:', code, message);
             });
 
-            // Handle when we leave the room
             this.room.onLeave((code) => {
                 console.log('Left room:', code);
             });
