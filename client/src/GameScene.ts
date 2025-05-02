@@ -118,19 +118,12 @@ export default class GameScene extends Phaser.Scene {
             return;
         }
 
-        this.adjustCamera();
         const velocity = this.getPlayerMovement();
         this.player.setVelocity(velocity.x, velocity.y);
 
         // Only send position to server if the player is actually moving
         if (velocity.x !== 0 || velocity.y !== 0) {
             this.room.send('move', { x: this.player.x, y: this.player.y });
-        }
-    }
-
-    private adjustCamera() {
-        if (!this.player || !this.cursors) {
-            return;
         }
     }
 
