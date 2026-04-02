@@ -13,7 +13,9 @@ export default class GameScene extends Phaser.Scene {
 
     constructor() {
         super({ key: 'GameScene' });
-        this.client = new Client('ws://localhost:2567');
+        console.log(import.meta.env);
+        const serverUrl = 'localhost:2567'; // Replace with your server URL
+        this.client = new Client(serverUrl);
     }
 
     preload() {
